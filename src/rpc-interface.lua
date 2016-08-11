@@ -41,7 +41,7 @@ local interface = {
 		-- TODO: check to make sure they are connecting over allowed network
 		
 		-- check maxclients config to make sure we are not registering more clients than needed
-		local activeSubscribers = db.getActiveSubscribers()
+		local activeSubscribers = db.getActiveSessions()
 		if #activeSubscribers > config.gateway.maxConnections then
 			return { success = false, errorMsg = "Too many subscribers", temporaryError = true }
 		end
@@ -95,11 +95,11 @@ local interface = {
 	
 	connectTo = function(ip, port, method, sid)
 		
-		local requestip = cgilua.servervariable("REMOTE_ADDR")
+		--local requestip = cgilua.servervariable("REMOTE_ADDR")
 		
-		if requestip ~= "127.0.0.1" and requestip ~= "::1" then
-			return { success = false, errorMsg = "Permission denied" }
-		end
+		--if requestip ~= "127.0.0.1" and requestip ~= "::1" then
+		--	return { success = false, errorMsg = "Permission denied" }
+		--end
 		
 		-- TODO: check network == cjdns
 		if method == "cjdns" and config.cjdns.subscriberSupport == "yes" and config.cjdns.tunnelSupport == "yes" then
@@ -149,24 +149,54 @@ local interface = {
 		return { success = false, errorMsg = "Method not supported" }
 	end,
     
+    disconnectFrom = function(sid)
+        
+		--local requestip = cgilua.servervariable("REMOTE_ADDR")
+		
+		--if requestip ~= "127.0.0.1" and requestip ~= "::1" then
+		---	return { success = false, errorMsg = "Permission denied" }
+		--end
+        
+        -- TODO: implement
+		
+		return { success = false, errorMsg = "Unimplemented" }
+	end,
+	
 	listGateways = function(ip, port, method, sid)
 		
-		local requestip = cgilua.servervariable("REMOTE_ADDR")
+		--local requestip = cgilua.servervariable("REMOTE_ADDR")
 		
-		if requestip ~= "127.0.0.1" and requestip ~= "::1" then
-			return { success = false, errorMsg = "Permission denied" }
+		--if requestip ~= "127.0.0.1" and requestip ~= "::1" then
+		---	return { success = false, errorMsg = "Permission denied" }
+		--end
+		
+		local gateways, err = db.getRecentGateways()
+		
+		if err then
+			return { success = false, errorMsg = err }
+		else
+			return { success = true, ["gateways"] = gateways }
 		end
-        
-        local gateways, err = db.getRecentGateways()
-        
-        if err then
-            return { success = false, errorMsg = err }
-        else
-            return { success = true, ["gateways"] = gateways }
-        end
-        
+		
 	end,
-    
+	
+	listSessions = function()
+		
+		--local requestip = cgilua.servervariable("REMOTE_ADDR")
+		
+		--if requestip ~= "127.0.0.1" and requestip ~= "::1" then
+		--	return { success = false, errorMsg = "Permission denied" }
+		--end
+		
+		local sessions, err = db.getActiveSessions()
+		
+		if err then
+			return { success = false, errorMsg = err }
+		else
+			return { success = true, ["sessions"] = sessions }
+		end
+	end,
+	
 	pollCallStatus = function(callId)
 		if rpc.isBlockingCallDone(callId) then
 			local result, err = rpc.returnBlockingCallResult(callId)
